@@ -9,6 +9,7 @@ To compute all RTT estimates for each pair of packets (SEQ/ACK) from a pcap file
 ipsumdump -tsSdDFQKL --eth-dst -r pcapFile.dump.gz --filter="tcp" | python rttEstimation_TCP.py > rtt.csv
 ```
 
+Ipsumdump can deal with either a raw or compressed pcap file.
 If you have to deal with large pcap files, pypy can do the same thing in less time:
 ```Shell
 ipsumdump -tsSdDFQKL --eth-dst -r pcapFile.dump.gz --filter="tcp" | pypy rttEstimation_TCP.py > rtt.csv
