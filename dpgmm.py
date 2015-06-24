@@ -1,29 +1,36 @@
 import numpy as np
 import dpcluster as dpc
-# import pandas as pd
+import pandas as pd
+import os
 
 
-def loadData(filename):
+def loadData(filename, format="rttEstimate"):
     """Load a csv file in memory.
     :returns: pandas DataFrame with the file data
 
     """
-    pass
+    
+    if format=="rttEstimate":
+        df = pd.read_csv(filename, sep=",", header=None, names=["ip", "peer", "rtt", "dstMac"])
+
+    return df
 
 
-def clusterRttPerIP(rttEstimates):
+def clusterRttPerIP(rttEstimates, outputDirectory="./rttDistributions/"):
+
+    if not os.path.exists(outputDirectory):
+        os.mkdir(outputDirectory)
 
     # for each IP in the traffic
     ips = rttEstimates.ip.unique()
 
     for ip in ips:
+        fi = open("{0}/{1}.csv".format(outputDirectory, ip))
         data = rttEstimates[rttEstimates.ip == ip].rtt
         vdp = dpgmm(data)
         params = NIWparam2Nparam(vdp)
-        print(params)
-        # write a file
-        a = list()
-        a.append("hello")
+        for mu, V in params:
+            fi.write("{0},{1}".format(mu, V))
 
 
 def NIWparam2Nparam(vdp, stdMax=100, minClusterSize=1):
