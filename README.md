@@ -33,3 +33,6 @@ head rtt.csv
 The first and third columns are the most important ones. The third column is the estimated RTT for the IP address given by the first column.
 The second and fourth columns are the destination IP and MAC address of the TCP acknowledgment packet used to estimate the corresponding RTT.
 Note that multiple RTT estimates are computed for the same TCP flow.
+
+# Author
+Romain Fontugne (National Institute of Informatics) http://romain.fontugne.free.fr
