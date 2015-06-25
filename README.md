@@ -19,7 +19,6 @@ If you have to deal with large pcap files, pypy can do the same thing in less ti
 ipsumdump -tsSdDFQKL --eth-dst -r pcapFile.dump.gz --filter="tcp" | pypy rttEstimation_TCP.py > rtt.csv
 ```
 
-### Output
 The resulting csv file look like this:
 ```Shell
 head rtt.csv
