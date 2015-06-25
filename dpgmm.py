@@ -3,7 +3,11 @@ import dpcluster as dpc
 import pandas as pd
 import os
 import sys
-import matplotlib.pylab as plt
+try:
+    import matplotlib.pylab as plt
+except Exception, e:
+    sys.stderr("Matplotlib is not available!")
+    
 
 
 def loadData(filename):
