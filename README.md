@@ -39,20 +39,20 @@ The second and fourth columns are the destination IP and MAC address of the TCP 
 Note that multiple RTT estimates are computed for the same TCP flow.
 
 ## RTT Analysis
-The goal here is to identify groups of similar RTT values for each IP address. The dpgmm.py script does this RTT clustering based on the Dirichlet Process Gaussian Mixture Model. For example:
+The goal here is to identify groups of similar RTT values for each IP address. The dpgmm.py script does this by finding mixed RTT distributions using the Dirichlet Process Gaussian Mixture Model. This script takes as input the CSV file generated previously:
 ```Shell
 python dpgmm.py rtt.csv outputDirectory/
 ```
-This command creates for each IP address a CSV file in the outputDirectory that look like that:
+And it creates for each IP address a CSV file that looks like this:
 ```Shell
-cat 209.114.162.19.csv
+cat outputDirectory/209.114.162.19.csv
 0.00162277498992,3.3783390488e-06
 0.00150017549559,3.77950997701e-06
 0.00174587674708,4.1721750336e-06
 0.00187348282214,4.16300079454e-06
 0.00199608008361,4.96783666398e-06
 ```
-Each line in this file represent a cluster and the two values are the corresponding mean and standard deviation values.
+Each line represents an RTT distribution and the two values are the corresponding mean and standard deviation.
 
 # Author
 Romain Fontugne (National Institute of Informatics) http://romain.fontugne.free.fr
