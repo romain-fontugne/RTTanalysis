@@ -6,6 +6,7 @@ import os
 import sys
 try:
     import matplotlib.pylab as plt
+    import matplotlib as mpl
 except Exception, e:
     sys.stderr("Matplotlib is not available!")
     
@@ -110,7 +111,7 @@ def logNormalMeanStdDev(loc, scale):
     return mu, np.sqrt(var)
 
 
-def dpgmm(data, priorWeight=0.1, maxClusters=16, thresh=1e-6, maxIter=10000):
+def dpgmm(data, priorWeight=0.1, maxClusters=32, thresh=1e-6, maxIter=10000):
     """
     Compute the Variational Inference for Dirichlet Process Mixtures
     on the given data.
@@ -158,6 +159,8 @@ def plotRttDistribution(rttEstimates, ip, filename, nbBins=500, logscale=False):
     else:
         plt.xlabel("RTT")
     plt.ylabel("pdf")
+    minorLocator = mpl.ticker.MultipleLocator(10)
+    ax.xaxis.set_minor_locator(minorLocator)
     plt.tight_layout()
     plt.savefig(filename)
 
