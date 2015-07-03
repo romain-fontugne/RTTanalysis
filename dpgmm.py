@@ -50,7 +50,6 @@ def clusterRttPerIP(rttEstimates, outputDirectory="./rttDistributions/", minEsti
 
     for ip in ips:
         data = np.log10(rttEstimates[rttEstimates.index == ip].rtt)
-        print "len of data %s" % data
 
         # Look only at flows containing a certain number of RTT estimates
         if len(data) < minEstimates:
@@ -64,7 +63,6 @@ def clusterRttPerIP(rttEstimates, outputDirectory="./rttDistributions/", minEsti
         # Write the clusters characteristics in a file
         fi = open("{0}/{1}.csv".format(outputDirectory, ip), "w")
         params = NIWparam2Nparam(vdp)
-        print params
         mean, std = logNormalMeanStdDev(params[0, :], params[1, :])
         for mu, sig in zip(mean, std):
             fi.write("{0},{1}\n".format(mu, sig))
@@ -113,7 +111,7 @@ def logNormalMeanStdDev(loc, scale):
     return mu, np.sqrt(var)
 
 
-def dpgmm(data, priorWeight=0.1, maxClusters=32, thresh=1e-3, maxIter=10000):
+def dpgmm(data, priorWeight=0.1, maxClusters=16, thresh=1e-6, maxIter=10000):
     """
     Compute the Variational Inference for Dirichlet Process Mixtures
     on the given data.
@@ -131,18 +129,22 @@ def dpgmm(data, priorWeight=0.1, maxClusters=32, thresh=1e-3, maxIter=10000):
     return vdp
 
 
-def plotRttDistribution(rttEstimates, ip, filename, nbBins=500):
+def plotRttDistribution(rttEstimates, ip, filename, nbBins=500, logscale=False):
     """Plot the RTT distribution of an IP address
 
     :rttEstimates: pandas DataFrame containing the RTT estimations
     :ip: IP address to plot
     :filename: Filename for the plot
     :nbBins: Number of bins in the histogram
+    :logscale: Plot RTTs in logscale if set to True
     :returns: None
 
     """
 
-    data = np.log10(rttEstimates[rttEstimates.index == ip].rtt)
+    if logscale:
+        data = np.log10(rttEstimates[rttEstimates.index == ip].rtt)
+    else:
+        data = rttEstimates[rttEstimates.index == ip].rtt
 
     h, b=np.histogram(data, nbBins, normed=True)
     plt.figure(1, figsize=(9, 3))
@@ -151,6 +153,9 @@ def plotRttDistribution(rttEstimates, ip, filename, nbBins=500):
     x = b[:-1]
     ax.plot(x, h, "k")
     ax.grid(True)
+    plt.title("%s (%s RTTs)" % (ip, len(data)))
+    plt.xlabel("RTT")
+    plt.ylabel("pdf")
     plt.tight_layout()
     plt.savefig(filename)
 
