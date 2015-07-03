@@ -1,4 +1,5 @@
 import numpy as np
+import glob
 import dpcluster as dpc
 import pandas as pd
 import os
@@ -10,16 +11,28 @@ except Exception, e:
     
 
 
-def loadData(filename):
+def loadData(filename, format="rttEstimate"):
     """Load a csv file in memory.
     :returns: pandas DataFrame with the file data
 
     """
 
-    format="rttEstimate"
-
     if format=="rttEstimate":
         df = pd.read_csv(filename, sep=",", header=None, names=["ip", "peer", "rtt", "dstMac"])
+    elif format=="thomas":
+        # the filename is a directory containing several RTT measurements
+        # ..../ipSrc/ipDst/flowID/hour
+        data = []
+        for fi in glob.glob(filename):
+            tmp = pd.read_csv(fi, sep="\t", comment="s", header=None,
+                names=["rtt", "start_sec", "start_msec", "end_sec", "end_msec"],
+                usecols=["rtt"])
+            val = fi.split("/")
+            tmp["ip"] = val[-4]
+            tmp["peer"] = val[-3]
+            data.append(tmp)
+
+        df = pd.concat(data)
 
     # The ip addresses become the index
     df = df.set_index("ip")
@@ -27,7 +40,7 @@ def loadData(filename):
     return df
 
 
-def clusterRttPerIP(rttEstimates, outputDirectory="./rttDistributions/", minEstimates=10):
+def clusterRttPerIP(rttEstimates, outputDirectory="./rttDistributions/", minEstimates=10, plot=True):
     """For each IP address, find the different RTT distributions and write
     their mean and standard deviation in files.
     """
@@ -37,6 +50,7 @@ def clusterRttPerIP(rttEstimates, outputDirectory="./rttDistributions/", minEsti
 
     for ip in ips:
         data = np.log10(rttEstimates[rttEstimates.index == ip].rtt)
+        print "len of data %s" % data
 
         # Look only at flows containing a certain number of RTT estimates
         if len(data) < minEstimates:
@@ -50,9 +64,13 @@ def clusterRttPerIP(rttEstimates, outputDirectory="./rttDistributions/", minEsti
         # Write the clusters characteristics in a file
         fi = open("{0}/{1}.csv".format(outputDirectory, ip), "w")
         params = NIWparam2Nparam(vdp)
+        print params
         mean, std = logNormalMeanStdDev(params[0, :], params[1, :])
         for mu, sig in zip(mean, std):
             fi.write("{0},{1}\n".format(mu, sig))
+
+        if plot:
+            plotRttDistribution(rttEstimates, ip, "{0}/{1}.eps".format(outputDirectory, ip))
 
 
 def NIWparam2Nparam(vdp, minClusterIPRatio=0.05):
@@ -152,7 +170,10 @@ if __name__ == "__main__":
             os.mkdir(outputDirectory)
 
     # Get RTT data from given file
-    rtt = loadData(filename)
+    if filename.endswith(".csv"):
+        rtt = loadData(filename, format="rttEstimates")
+    else:
+        rtt = loadData(filename, format="thomas")
 
     # Find RTT distributions for each IP address
     clusterRttPerIP(rtt, outputDirectory)
