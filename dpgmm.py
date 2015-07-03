@@ -28,8 +28,7 @@ def loadData(filename, format="rttEstimate"):
                 names=["rtt", "start_sec", "start_msec", "end_sec", "end_msec"],
                 usecols=["rtt"])
             val = fi.split("/")
-            tmp["ip"] = val[-4]
-            tmp["peer"] = val[-3]
+            tmp["ip"] = "{0}->{1}".format(val[-4], val[-3])
             data.append(tmp)
 
         df = pd.concat(data)
@@ -154,7 +153,10 @@ def plotRttDistribution(rttEstimates, ip, filename, nbBins=500, logscale=False):
     ax.plot(x, h, "k")
     ax.grid(True)
     plt.title("%s (%s RTTs)" % (ip, len(data)))
-    plt.xlabel("RTT")
+    if logscale:
+        plt.xlabel("log10(RTT)")
+    else:
+        plt.xlabel("RTT")
     plt.ylabel("pdf")
     plt.tight_layout()
     plt.savefig(filename)
