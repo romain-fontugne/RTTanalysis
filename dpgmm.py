@@ -27,7 +27,7 @@ def loadData(filename, format="rttEstimate"):
         for fi in glob.glob(filename):
             tmp = pd.read_csv(fi, sep="\t", comment="s", header=None,
                 names=["rtt", "start_sec", "start_msec", "end_sec", "end_msec"],
-                usecols=["rtt"])
+                usecols=["rtt","start_sec"])
             val = fi.split("/")
             tmp["ip"] = "{0}->{1}".format(val[-4], val[-3])
             data.append(tmp)
@@ -38,6 +38,60 @@ def loadData(filename, format="rttEstimate"):
     df = df.set_index("ip")
 
     return df
+
+
+def clusterRTToverTime(rttEstimates, timeBin="60", outputDirectory="./rttDistributions/",
+        minEstimates=10, plot=True, logNormal=True):
+    """For each IP address, find the different RTT distributions for each time 
+    bin and plot the average value of each distribution.
+    """
+
+    # for each IP in the traffic
+    ips = rttEstimates.index.unique()
+
+    for ip in ips:
+        start = rttEstimates[rttEstimates.index == ip].start_sec.min()
+        end = rttEstimates[rttEstimates.index == ip].start_sec.max()
+        dataIP = rttEstimates[rttEstimates.index == ip]
+
+        x = []
+        y = []
+        z = []
+
+        for ts in range(start,end,timeBin):
+            if logNormal:
+                data = np.log10(dataIP[(dataIP.start_sec>=ts) & (dataIP.start_sec<ts+timeBin)].rtt)
+            else:
+                data = dataIP[(dataIP.start_sec>=ts) & (dataIP.start_sec<ts+timeBin)].rtt
+            # Look only at flows containing a certain number of RTT estimates
+            if len(data) < minEstimates:
+                sys.stderr("Ignoring data!! not enough samples!")
+                continue
+            
+            # Cluster the data
+            vdp = dpgmm(data)
+            if vdp is None:
+                continue
+
+            params = NIWparam2Nparam(vdp)
+            if logNormal:
+                mean, std = logNormalMeanStdDev(params[0, :], params[1, :])
+            else:
+                mean = params[0, :]
+                std = params[1, :]
+
+            for mu, sig in zip(mean, std):
+                y.append(mu) 
+                z.append(sig)
+                x.append(ts)
+
+        # Plot the clusters characteristics in a file
+        plt.figure()
+        plt.errorbar(x,y,yerr=z,fmt="o")
+        if logNormal:
+            plt.savefig("{0}/{1}_timeBin{2}sec_logNormal.eps".format(outputDirectory, ip, timeBin))
+        else:
+            plt.savefig("{0}/{1}_timeBin{2}sec_normal.eps".format(outputDirectory, ip, timeBin))
 
 
 def clusterRttPerIP(rttEstimates, outputDirectory="./rttDistributions/", minEstimates=10, plot=True):
@@ -187,3 +241,4 @@ if __name__ == "__main__":
 
     # Find RTT distributions for each IP address
     clusterRttPerIP(rtt, outputDirectory)
+    #clusterRTToverTime(rtt, 60, outputDirectory, logNormal=False)
