@@ -98,7 +98,7 @@ def clusterRTToverTime(rttEstimates, timeBin="60", outputDirectory="./rttDistrib
             plt.savefig("{0}/{1}_timeBin{2}sec_normal.eps".format(outputDirectory, ip, timeBin))
 
 
-def clusterRttPerIP(rttEstimates, outputDirectory="./rttDistributions/", minEstimates=10, plot=True):
+def clusterRttPerIP(rttEstimates, outputDirectory="./rttDistributions/", minEstimates=10, plot=True, logNormal=False):
     """For each IP address, find the different RTT distributions and write
     their mean and standard deviation in files.
     """
@@ -107,7 +107,10 @@ def clusterRttPerIP(rttEstimates, outputDirectory="./rttDistributions/", minEsti
     ips = rttEstimates.index.unique()
 
     for ip in ips:
-        data = np.log10(rttEstimates[rttEstimates.index == ip].rtt)
+        if logNormal:
+            data = np.log10(rttEstimates[rttEstimates.index == ip].rtt)
+        else:
+            data = rttEstimates[rttEstimates.index == ip].rtt
 
         # Look only at flows containing a certain number of RTT estimates
         if len(data) < minEstimates:
@@ -121,7 +124,12 @@ def clusterRttPerIP(rttEstimates, outputDirectory="./rttDistributions/", minEsti
         # Write the clusters characteristics in a file
         fi = open("{0}/{1}.csv".format(outputDirectory, ip), "w")
         params = NIWparam2Nparam(vdp)
-        mean, std = logNormalMeanStdDev(params[0, :], params[1, :])
+        if logNormal:
+            mean, std = logNormalMeanStdDev(params[0, :], params[1, :])
+        else:
+            mean = params[0, :]
+            std = params[1, :]
+
         for mu, sig in zip(mean, std):
             fi.write("{0},{1}\n".format(mu, sig))
 
@@ -241,7 +249,7 @@ if __name__ == "__main__":
     if filename.endswith(".csv"):
         rtt = loadData(filename, format="rttEstimates")
         # Find RTT distributions for each IP address
-        clusterRttPerIP(rtt, outputDirectory)
+        clusterRttPerIP(rtt, outputDirectory, logNormal=False)
     else:
         rtt = loadData(filename, format="thomas")
         # Find RTT distributions over time
