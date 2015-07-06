@@ -18,7 +18,7 @@ def loadData(filename, format="rttEstimate"):
 
     """
 
-    if format=="rttEstimates":
+    if format=="rttEstimate":
         df = pd.read_csv(filename, sep=",", header=None, names=["ip", "peer", "rtt", "dstMac"])
     elif format=="thomas":
         # the filename is a directory containing several RTT measurements
@@ -247,7 +247,7 @@ if __name__ == "__main__":
 
     # Get RTT data from given file
     if filename.endswith(".csv"):
-        rtt = loadData(filename, format="rttEstimates")
+        rtt = loadData(filename, format="rttEstimate")
         # Find RTT distributions for each IP address
         clusterRttPerIP(rtt, outputDirectory, logNormal=False)
     else:
