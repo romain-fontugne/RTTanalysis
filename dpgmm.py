@@ -48,7 +48,6 @@ def clusterRTToverTime(rttEstimates, timeBin="60", outputDirectory="./rttDistrib
 
     # for each IP in the traffic
     ips = rttEstimates.index.unique()
-
     for ip in ips:
         start = rttEstimates[rttEstimates.index == ip].start_sec.min()
         end = rttEstimates[rttEstimates.index == ip].start_sec.max()
@@ -58,11 +57,14 @@ def clusterRTToverTime(rttEstimates, timeBin="60", outputDirectory="./rttDistrib
         y = []
         z = []
 
+        i = 0
+
         for ts in range(start,end,timeBin):
             if logNormal:
                 data = np.log10(dataIP[(dataIP.start_sec>=ts) & (dataIP.start_sec<ts+timeBin)].rtt)
             else:
                 data = dataIP[(dataIP.start_sec>=ts) & (dataIP.start_sec<ts+timeBin)].rtt
+          
             # Look only at flows containing a certain number of RTT estimates
             if len(data) < minEstimates:
                 sys.stderr("Ignoring data!! not enough samples!")
@@ -88,6 +90,8 @@ def clusterRTToverTime(rttEstimates, timeBin="60", outputDirectory="./rttDistrib
         # Plot the clusters characteristics in a file
         plt.figure()
         plt.errorbar(x,y,yerr=z,fmt="o")
+        plt.ylim([130, 165])
+        plt.grid(True)
         if logNormal:
             plt.savefig("{0}/{1}_timeBin{2}sec_logNormal.eps".format(outputDirectory, ip, timeBin))
         else:
@@ -165,7 +169,7 @@ def logNormalMeanStdDev(loc, scale):
     return mu, np.sqrt(var)
 
 
-def dpgmm(data, priorWeight=0.1, maxClusters=32, thresh=1e-6, maxIter=10000):
+def dpgmm(data, priorWeight=0.1, maxClusters=32, thresh=1e-6, maxIter=100000):
     """
     Compute the Variational Inference for Dirichlet Process Mixtures
     on the given data.
@@ -241,4 +245,5 @@ if __name__ == "__main__":
     else:
         rtt = loadData(filename, format="thomas")
         # Find RTT distributions over time
-        clusterRTToverTime(rtt, 60, outputDirectory, logNormal=False)
+        clusterRTToverTime(rtt, 600, outputDirectory, logNormal=False)
+        #clusterRttPerIP(rtt, outputDirectory)
