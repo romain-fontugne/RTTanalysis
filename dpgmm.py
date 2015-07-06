@@ -236,9 +236,9 @@ if __name__ == "__main__":
     # Get RTT data from given file
     if filename.endswith(".csv"):
         rtt = loadData(filename, format="rttEstimates")
+        # Find RTT distributions for each IP address
+        clusterRttPerIP(rtt, outputDirectory)
     else:
         rtt = loadData(filename, format="thomas")
-
-    # Find RTT distributions for each IP address
-    clusterRttPerIP(rtt, outputDirectory)
-    #clusterRTToverTime(rtt, 60, outputDirectory, logNormal=False)
+        # Find RTT distributions over time
+        clusterRTToverTime(rtt, 60, outputDirectory, logNormal=False)
