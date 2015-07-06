@@ -18,7 +18,7 @@ def loadData(filename, format="rttEstimate"):
 
     """
 
-    if format=="rttEstimate":
+    if format=="rttEstimates":
         df = pd.read_csv(filename, sep=",", header=None, names=["ip", "peer", "rtt", "dstMac"])
     elif format=="thomas":
         # the filename is a directory containing several RTT measurements
