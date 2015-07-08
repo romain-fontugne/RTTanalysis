@@ -8,7 +8,7 @@ try:
     import matplotlib.pylab as plt
     import matplotlib as mpl
 except Exception, e:
-    sys.stderr("Matplotlib is not available!")
+    sys.stderr.write("Matplotlib is not available!")
     
 
 
@@ -17,7 +17,6 @@ def loadData(filename, format="rttEstimate"):
     :returns: pandas DataFrame with the file data
 
     """
-
     if format=="rttEstimate":
         df = pd.read_csv(filename, sep=",", header=None, names=["ip", "peer", "rtt", "dstMac"])
     elif format=="thomas":
@@ -90,7 +89,6 @@ def clusterRTToverTime(rttEstimates, timeBin="60", outputDirectory="./rttDistrib
         # Plot the clusters characteristics in a file
         plt.figure()
         plt.errorbar(x,y,yerr=z,fmt="o")
-        plt.ylim([130, 165])
         plt.grid(True)
         if logNormal:
             plt.savefig("{0}/{1}_timeBin{2}sec_logNormal.eps".format(outputDirectory, ip, timeBin))
@@ -115,7 +113,6 @@ def clusterRttPerIP(rttEstimates, outputDirectory="./rttDistributions/", minEsti
         # Look only at flows containing a certain number of RTT estimates
         if len(data) < minEstimates:
             continue
-        
         # Cluster the data
         vdp = dpgmm(data)
         if vdp is None:
@@ -177,7 +174,7 @@ def logNormalMeanStdDev(loc, scale):
     return mu, np.sqrt(var)
 
 
-def dpgmm(data, priorWeight=0.1, maxClusters=32, thresh=1e-6, maxIter=100000):
+def dpgmm(data, priorWeight=0.1, maxClusters=32, thresh=1e-3, maxIter=10000):
     """
     Compute the Variational Inference for Dirichlet Process Mixtures
     on the given data.
@@ -187,10 +184,10 @@ def dpgmm(data, priorWeight=0.1, maxClusters=32, thresh=1e-6, maxIter=100000):
     :maxClusters: Maximum number of clusters
     :
     """
-    
     data = np.array(data).reshape(-1, 1)
     vdp = dpc.VDP(dpc.distributions.GaussianNIW(1), w=priorWeight, k=maxClusters, tol=thresh, max_iters=maxIter)
-    vdp.batch_learn(vdp.distr.sufficient_stats(data))
+    stats = vdp.distr.sufficient_stats(data)
+    vdp.batch_learn(stats)
 
     return vdp
 
@@ -245,12 +242,21 @@ if __name__ == "__main__":
         if not os.path.exists(outputDirectory):
             os.mkdir(outputDirectory)
 
-    # Get RTT data from given file
     if filename.endswith(".csv"):
+        # Get RTT data from given file
         rtt = loadData(filename, format="rttEstimate")
+
+        # Sample RTT estimates: samplingRate=0.1 means that 10% of the
+        # estimates will be used
+        samplingRate = 0.1
+        if samplingRate:
+            rtt = rtt.sample(frac=samplingRate)
+        
         # Find RTT distributions for each IP address
         clusterRttPerIP(rtt, outputDirectory, logNormal=False)
+
     else:
+        # Get RTT data from given file
         rtt = loadData(filename, format="thomas")
         # Find RTT distributions over time
         clusterRTToverTime(rtt, 600, outputDirectory, logNormal=False)
