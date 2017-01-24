@@ -149,12 +149,12 @@ def NIWparam2Nparam(vdp, minClusterIPRatio=0.05):
         vdp.cluster_sizes() > (minClusterIPRatio * nbIPs), :])[0]
     Sgs = Sgs / (k + 1 + 1)[:, np.newaxis, np.newaxis]
     
-    res = np.zeros( (2, len(mus)) )
+    res = np.zeros( (len(mus), 2) )
     for i, (mu, Sg) in enumerate(zip(mus, Sgs)):
         w, V = np.linalg.eig(Sg)
         V = np.array(np.matrix(V) * np.matrix(np.diag(np.sqrt(w))))
         V = V[0]
-        res[:, i] = (mu[0], V[0])
+        res[i] = (mu[0], V[0])
 
     return res
 
